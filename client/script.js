@@ -3,8 +3,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let currentDocuments = [];
     let statusFilter = "all";
 
-    const BASE_URL = process.env.BASE_URL;
-    // const BASE_URL = "https://gestion-des-documents.onrender.com";
+    // const BASE_URL = process.env.BASE_URL;
+    const BASE_URL = "https://gestion-des-documents.onrender.com";
 
     const API_URL = `${BASE_URL}/documents`;
 
