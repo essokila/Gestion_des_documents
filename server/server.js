@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 
 const app = express();
-const PORT = 3000;
 
 app.use(express.json());
 app.use(cors());
@@ -10,13 +9,14 @@ app.use(cors());
 const { Pool } = require('pg');
 
 const pool = new Pool({
-    user: 'postgres',        // ex: postgres
-    host: 'localhost',
-    database: 'minidocs',           // nom de ta BDD
-    password: 'ter',     // ton mot de passe
-    port: 5432,                     // port PostgreSQL par défaut
+    user: process.env.DB_USER,
+    host: process.env.DB_HOST,
+    database: process.env.DB_NAME,
+    password: process.env.DB_PASSWORD,
+    port: parseInt(process.env.DB_PORT),
 });
 
+const PORT = process.env.PORT || 3000;
 
 // GET /documents
 
