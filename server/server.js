@@ -17,7 +17,7 @@ const pool = new Pool({
 });
 
 const PORT = process.env.PORT || 3000;
-
+    
 // GET /documents
 
 app.get('/documents', async (req, res) => {
@@ -185,86 +185,86 @@ app.get('/utilisateurs', async (req, res) => {
     }
 });
 
-// POST /utilisateurs
-app.post('/utilisateurs', async (req, res) => {
-    const { nom, email, telephone } = req.body;
-    if (!nom || !email) return res.status(400).json({ success: false, message: "Nom et email requis" });
+// // POST /utilisateurs
+// app.post('/utilisateurs', async (req, res) => {
+//     const { nom, email, telephone } = req.body;
+//     if (!nom || !email) return res.status(400).json({ success: false, message: "Nom et email requis" });
 
-    try {
-        const result = await pool.query(
-            'INSERT INTO utilisateurs (nom, email, telephone) VALUES ($1, $2, $3) RETURNING *',
-            [nom, email, telephone]
-        );
-        res.json({ success: true, utilisateur: result.rows[0] });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, message: "Erreur serveur" });
-    }
-});
+//     try {
+//         const result = await pool.query(
+//             'INSERT INTO utilisateurs (nom, email, telephone) VALUES ($1, $2, $3) RETURNING *',
+//             [nom, email, telephone]
+//         );
+//         res.json({ success: true, utilisateur: result.rows[0] });
+//     } catch (err) {
+//         console.error(err);
+//         res.status(500).json({ success: false, message: "Erreur serveur" });
+//     }
+// });
 
 
 
-// GET /emprunts
-app.get('/emprunts', async (req, res) => {
-    try {
-        const result = await pool.query(`
-            SELECT e.*, u.nom AS utilisateur_nom, d.titre AS document_titre
-            FROM emprunts e
-            JOIN utilisateurs u ON e.utilisateur_id = u.id
-            JOIN documents d ON e.document_id = d.id
-            ORDER BY e.id
-        `);
-        res.json(result.rows);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, message: "Erreur serveur" });
-    }
-});
+// // GET /emprunts
+// app.get('/emprunts', async (req, res) => {
+//     try {
+//         const result = await pool.query(`
+//             SELECT e.*, u.nom AS utilisateur_nom, d.titre AS document_titre
+//             FROM emprunts e
+//             JOIN utilisateurs u ON e.utilisateur_id = u.id
+//             JOIN documents d ON e.document_id = d.id
+//             ORDER BY e.id
+//         `);
+//         res.json(result.rows);
+//     } catch (err) {
+//         console.error(err);
+//         res.status(500).json({ success: false, message: "Erreur serveur" });
+//     }
+// });
 
-// POST /emprunts
-app.post('/emprunts', async (req, res) => {
-    let { utilisateur_id, document_id } = req.body;
-    utilisateur_id = parseInt(utilisateur_id);
-    document_id = parseInt(document_id);
+// // POST /emprunts
+// app.post('/emprunts', async (req, res) => {
+//     let { utilisateur_id, document_id } = req.body;
+//     utilisateur_id = parseInt(utilisateur_id);
+//     document_id = parseInt(document_id);
 
-    if (!utilisateur_id || !document_id)
-        return res.status(400).json({ success: false, message: "Utilisateur et document requis" });
+//     if (!utilisateur_id || !document_id)
+//         return res.status(400).json({ success: false, message: "Utilisateur et document requis" });
 
-    try {
-        // Vérifier si document déjà emprunté
-        const check = await pool.query(
-            'SELECT * FROM emprunts WHERE document_id = $1 AND rendu = FALSE',
-            [document_id]
-        );
-        if (check.rows.length > 0)
-            return res.status(400).json({ success: false, message: "Document déjà emprunté" });
+//     try {
+//         // Vérifier si document déjà emprunté
+//         const check = await pool.query(
+//             'SELECT * FROM emprunts WHERE document_id = $1 AND rendu = FALSE',
+//             [document_id]
+//         );
+//         if (check.rows.length > 0)
+//             return res.status(400).json({ success: false, message: "Document déjà emprunté" });
 
-        const result = await pool.query(
-            'INSERT INTO emprunts (utilisateur_id, document_id) VALUES ($1, $2) RETURNING *',
-            [utilisateur_id, document_id]
-        );
-        res.json({ success: true, emprunt: result.rows[0] });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, message: "Erreur serveur" });
-    }
-});
+//         const result = await pool.query(
+//             'INSERT INTO emprunts (utilisateur_id, document_id) VALUES ($1, $2) RETURNING *',
+//             [utilisateur_id, document_id]
+//         );
+//         res.json({ success: true, emprunt: result.rows[0] });
+//     } catch (err) {
+//         console.error(err);
+//         res.status(500).json({ success: false, message: "Erreur serveur" });
+//     }
+// });
 
-app.patch('/emprunts/:id/rendu', async (req, res) => {
-    const id = parseInt(req.params.id);
-    try {
-        const result = await pool.query(
-            'UPDATE emprunts SET rendu = TRUE, date_retour = CURRENT_DATE WHERE id = $1 RETURNING *',
-            [id]
-        );
-        if (result.rows.length === 0)
-            return res.status(404).json({ success: false, message: "Emprunt non trouvé" });
-        res.json({ success: true, emprunt: result.rows[0] });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, message: "Erreur serveur" });
-    }
-});
+// app.patch('/emprunts/:id/rendu', async (req, res) => {
+//     const id = parseInt(req.params.id);
+//     try {
+//         const result = await pool.query(
+//             'UPDATE emprunts SET rendu = TRUE, date_retour = CURRENT_DATE WHERE id = $1 RETURNING *',
+//             [id]
+//         );
+//         if (result.rows.length === 0)
+//             return res.status(404).json({ success: false, message: "Emprunt non trouvé" });
+//         res.json({ success: true, emprunt: result.rows[0] });
+//     } catch (err) {
+//         console.error(err);
+//         res.status(500).json({ success: false, message: "Erreur serveur" });
+//     }
+// });
 
 
 

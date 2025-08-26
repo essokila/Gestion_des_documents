@@ -1,8 +1,13 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const API_URL = 'http://localhost:3000/documents';
     let editingId = null;
     let currentDocuments = [];
     let statusFilter = "all";
+
+    const BASE_URL = process.env.BASE_URL;
+    // const BASE_URL = "https://gestion-des-documents.onrender.com";
+
+    const API_URL = `${BASE_URL}/documents`;
+
 
     const searchInput = document.getElementById("searchInput");
 
@@ -14,72 +19,72 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     function renderDocuments(docs) {
-const list = document.getElementById('docList');
-list.innerHTML = '';
+        const list = document.getElementById('docList');
+        list.innerHTML = '';
 
-if (docs.length === 0) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td colspan="5" style="text-align:center; font-style:italic; color:#777;">Aucun document</td>`;
-    list.appendChild(tr);
-    return;
-}
+        if (docs.length === 0) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td colspan="5" style="text-align:center; font-style:italic; color:#777;">Aucun document</td>`;
+            list.appendChild(tr);
+            return;
+        }
 
-// 🔹 Trier par date_arrivee du plus ancien au plus récent
-docs.sort((a, b) => {
-const dateA = a.date_arrivee ? new Date(a.date_arrivee) : new Date(0);
-const dateB = b.date_arrivee ? new Date(b.date_arrivee) : new Date(0);
-return dateB - dateA; // ordre décroissant
-});
+        // 🔹 Trier par date_arrivee du plus ancien au plus récent
+        docs.sort((a, b) => {
+            const dateA = a.date_arrivee ? new Date(a.date_arrivee) : new Date(0);
+            const dateB = b.date_arrivee ? new Date(b.date_arrivee) : new Date(0);
+            return dateB - dateA; // ordre décroissant
+        });
 
-docs.forEach((doc, index) => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-        <td>${index + 1}</td>
-        <td>${doc.titre}</td>
-        <td>${doc.auteur || ''}</td>
-        <td class="${doc.statut}">${doc.statut}</td>
-        <td></td>
-    `;
-    const actionTd = tr.querySelector("td:last-child");
-    // Ajouter les boutons actions comme avant
-    const editBtn = document.createElement('button');
-    editBtn.textContent = "Modifier"; editBtn.className = "btn-blue";
-    editBtn.onclick = () => openModal(doc.id, doc);
-    actionTd.appendChild(editBtn);
+        docs.forEach((doc, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${doc.titre}</td>
+                <td>${doc.auteur || ''}</td>
+                <td class="${doc.statut}">${doc.statut}</td>
+                <td></td>
+            `;
+            const actionTd = tr.querySelector("td:last-child");
+            // Ajouter les boutons actions comme avant
+            const editBtn = document.createElement('button');
+            editBtn.textContent = "Modifier"; editBtn.className = "btn-blue";
+            editBtn.onclick = () => openModal(doc.id, doc);
+            actionTd.appendChild(editBtn);
 
-    if (doc.statut !== 'archivé') {
-        const archiveBtn = document.createElement('button');
-        archiveBtn.textContent = "Archiver"; archiveBtn.className = "btn-gray";
-        archiveBtn.onclick = () => archiveDocument(doc.id);
-        actionTd.appendChild(archiveBtn);
+            if (doc.statut !== 'archivé') {
+                const archiveBtn = document.createElement('button');
+                archiveBtn.textContent = "Archiver"; archiveBtn.className = "btn-gray";
+                archiveBtn.onclick = () => archiveDocument(doc.id);
+                actionTd.appendChild(archiveBtn);
+            }
+
+            if (doc.statut !== 'supprimé') {
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = "Supprimer"; deleteBtn.className = "btn-orange";
+                deleteBtn.onclick = () => deleteDocument(doc.id);
+                actionTd.appendChild(deleteBtn);
+            }
+
+            if (doc.statut === 'archivé' || doc.statut === 'supprimé') {
+                const restoreBtn = document.createElement('button');
+                restoreBtn.textContent = "Restaurer"; restoreBtn.className = "btn-blue";
+                restoreBtn.onclick = () => restoreDocument(doc.id);
+                actionTd.appendChild(restoreBtn);
+            }
+
+            const purgeBtn = document.createElement('button');
+            purgeBtn.textContent = "Purger"; purgeBtn.className = "btn-red";
+            purgeBtn.onclick = () => purgeDocument(doc.id);
+            actionTd.appendChild(purgeBtn);
+
+            list.appendChild(tr);
+        });
     }
 
-    if (doc.statut !== 'supprimé') {
-        const deleteBtn = document.createElement('button');
-        deleteBtn.textContent = "Supprimer"; deleteBtn.className = "btn-orange";
-        deleteBtn.onclick = () => deleteDocument(doc.id);
-        actionTd.appendChild(deleteBtn);
-    }
-
-    if (doc.statut === 'archivé' || doc.statut === 'supprimé') {
-        const restoreBtn = document.createElement('button');
-        restoreBtn.textContent = "Restaurer"; restoreBtn.className = "btn-blue";
-        restoreBtn.onclick = () => restoreDocument(doc.id);
-        actionTd.appendChild(restoreBtn);
-    }
-
-    const purgeBtn = document.createElement('button');
-    purgeBtn.textContent = "Purger"; purgeBtn.className = "btn-red";
-    purgeBtn.onclick = () => purgeDocument(doc.id);
-    actionTd.appendChild(purgeBtn);
-
-    list.appendChild(tr);
-});
-}
 
 
-
-    const filteredDocs = currentDocuments.filter(doc => 
+    const filteredDocs = currentDocuments.filter(doc =>
         doc.titre.toLowerCase().includes(query) &&
         (statusFilter === "all" || doc.statut.toLowerCase() === statusFilter.toLowerCase())
     );
@@ -121,7 +126,7 @@ docs.forEach((doc, index) => {
             const newDate = document.getElementById('editDateInput').value;
 
             try {
-                await fetch(`http://localhost:3000/documents/${id}`, {
+                await fetch(`${API_URL}/${id}`, {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ titre: newTitre, auteur: newAuteur, date_arrivee: newDate })
@@ -142,7 +147,7 @@ docs.forEach((doc, index) => {
     // Archiver
     async function archiveDocument(id) {
         try {
-            await fetch(`http://localhost:3000/documents/${id}`, {
+            await fetch(`${API_URL}/${id}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ statut: "archivé" })
@@ -157,7 +162,7 @@ docs.forEach((doc, index) => {
     // Supprimer
     async function deleteDocument(id) {
         try {
-            await fetch(`http://localhost:3000/documents/${id}`, {
+            await fetch(`${API_URL}/${id}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ statut: "supprimé" })
@@ -172,7 +177,7 @@ docs.forEach((doc, index) => {
     // Restaurer
     async function restoreDocument(id) {
         try {
-            await fetch(`http://localhost:3000/documents/${id}`, {
+            await fetch(`${API_URL}/${id}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ statut: "disponible" })
@@ -187,14 +192,14 @@ docs.forEach((doc, index) => {
     // Purger
 
     async function purgeDocument(id) {
-try {
-    await fetch(`${API_URL}/${id}/purge`, { method: "DELETE" });
-    showNotif("Document purgé définitivement !", "success");
-    fetchDocuments(); // recharge la liste
-} catch {
-    showNotif("Erreur lors de la purge !", "error");
-}
-}
+        try {
+            await fetch(`${API_URL}/${id}/purge`, { method: "DELETE" });
+            showNotif("Document purgé définitivement !", "success");
+            fetchDocuments(); // recharge la liste
+        } catch {
+            showNotif("Erreur lors de la purge !", "error");
+        }
+    }
 
 
 
@@ -241,13 +246,13 @@ try {
         const dateInput = document.getElementById("dateArriveeInput");
         const formTitle = document.getElementById("formTitle");
 
-        if(mode === "add") {
+        if (mode === "add") {
             formTitle.textContent = "Ajouter un document";
             editingId = null;
             titreInput.value = "";
             auteurInput.value = "";
             dateInput.value = new Date().toISOString().split("T")[0];
-        } else if(mode === "edit" && doc) {
+        } else if (mode === "edit" && doc) {
             formTitle.textContent = "Modifier un document";
             editingId = doc.id;
             titreInput.value = doc.titre;
@@ -273,8 +278,7 @@ try {
         setTimeout(() => {
             notif.style.display = 'none';
         }, 3000);
-}
-
+    }
 
     function fetchDocuments() {
         fetch(API_URL)
@@ -396,50 +400,63 @@ try {
         closeForm();
     });
 
-        // Après tes fonctions openForm() et closeForm()
-document.getElementById("addBtn").addEventListener("click", () => openForm("add"));
+    // Après tes fonctions openForm() et closeForm()
+    document.getElementById("addBtn").addEventListener("click", () => openForm("add"));
 
-document.getElementById("docForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
+    document.getElementById("docForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
 
-    const titre = document.getElementById("titreInput").value;
-    const auteur = document.getElementById("auteurInput").value;
-    const date_arrivee = document.getElementById("dateArriveeInput").value;
+        const titre = document.getElementById("titreInput").value;
+        const auteur = document.getElementById("auteurInput").value;
+        const date_arrivee = document.getElementById("dateArriveeInput").value;
 
-    const payload = { titre, auteur, date_arrivee };
+        const payload = { titre, auteur, date_arrivee };
 
-    try {
-        if (editingId) {
-            // Modification
-            await fetch(`http://localhost:3000/documents/${editingId}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            showNotif("Document modifié avec succès !", "success");
-        } else {
-            // Ajout
-            await fetch("http://localhost:3000/documents", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            showNotif("Document ajouté avec succès !", "success");
+        try {
+            if (editingId) {
+                // Modification
+                await fetch(`${API_URL}/${editingId}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                showNotif("Document modifié avec succès !", "success");
+            } else {
+                // Ajout
+                await fetch(`${API_URL}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                showNotif("Document ajouté avec succès !", "success");
+            }
+            closeForm();       // Fermer la carte
+            fetchDocuments();  // Mettre à jour la liste
+
+
+        } catch (err) {
+            console.error("Erreur :", err);
+            showNotif("Erreur lors de l'ajout/modification !", "error");
         }
-        closeForm();       // Fermer la carte
-        fetchDocuments();  // Mettre à jour la liste
 
 
-    } catch (err) {
-        console.error("Erreur :", err);
-        showNotif("Erreur lors de l'ajout/modification !", "error");
-    }
+    });
 
 
-});
+    // Bouton retour en haut flottant
+    const scrollBtn = document.getElementById("scrollTopBtn");
 
+    window.addEventListener("scroll", () => {
+        if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+            scrollBtn.classList.add("show");
+        } else {
+            scrollBtn.classList.remove("show");
+        }
+    });
 
-
+    scrollBtn.addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    });
 
 
 });
